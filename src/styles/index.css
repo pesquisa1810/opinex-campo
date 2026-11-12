@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { @apply bg-mist text-ink font-sans antialiased; }
+  :focus-visible { @apply outline-none ring-2 ring-gold ring-offset-2; }
+}
+@layer components {
+  .card { @apply bg-white rounded-2xl shadow-card border border-navy/5; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 h-11 font-medium transition disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-primary { @apply btn bg-navy text-white hover:bg-navy-2; }
+  .btn-gold { @apply btn bg-gold text-navy hover:bg-gold-dark hover:text-white; }
+  .btn-ghost { @apply btn bg-transparent text-navy hover:bg-navy/5; }
+  .btn-danger { @apply btn bg-alert text-white hover:opacity-90; }
+  .input { @apply w-full h-11 rounded-xl border border-navy/15 bg-white px-3 text-ink placeholder:text-ink-muted/70 focus:border-gold focus:ring-2 focus:ring-gold/30 outline-none; }
+  .label { @apply block text-sm font-medium text-navy mb-1; }
+}

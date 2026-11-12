@@ -30,8 +30,14 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        // Dados do Supabase nunca são cacheados: a coleta exige servidor online (v1).
-        runtimeCaching: [],
+        // Pré-cache leve (casca do app). Módulos pesados do admin (PDF, gráficos, mapa) são
+        // baixados sob demanda e guardados depois. Dados do Supabase NUNCA são cacheados.
+        globPatterns: ['**/*.{html,css,svg,png,ico,webmanifest}', 'assets/index-*.js'],
+        runtimeCaching: [{
+          urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/assets/'),
+          handler: 'CacheFirst',
+          options: { cacheName: 'opinex-assets', expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 } },
+        }],
       },
     }),
   ],

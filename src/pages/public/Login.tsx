@@ -15,7 +15,10 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const from = (location.state as { from?: string } | null)?.from
 
-  if (!loading && session) return <Navigate to={from ?? (isAdmin ? '/admin' : '/campo')} replace />
+  // O destino guardado só vale se combinar com o perfil de quem entrou (evita herdar a área de outro usuário)
+  const home = isAdmin ? '/admin' : '/campo'
+  const target = from && from.startsWith(home) ? from : home
+  if (!loading && session) return <Navigate to={target} replace />
 
   async function submit(e: FormEvent) {
     e.preventDefault()

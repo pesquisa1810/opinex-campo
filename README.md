@@ -31,14 +31,25 @@ cp .env.example .env.local   # preencha URL e chave anon do seu Supabase
 npm run dev
 ```
 
+## Documentação
+
+| Documento | Conteúdo |
+|---|---|
+| [`docs/PUBLICACAO.md`](docs/PUBLICACAO.md) | Colocar no ar: Supabase, GitHub, Vercel, primeiro administrador, checklist de homologação |
+| [`docs/MANUAL.md`](docs/MANUAL.md) | Manual do administrador e do entrevistador |
+| [`docs/MANUTENCAO.md`](docs/MANUTENCAO.md) | Backup, restauração, atualizações, LGPD e segurança operacional |
+| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Arquitetura, segurança, dispositivos, entrevistas e qualidade |
+| [`docs/TESTES.md`](docs/TESTES.md) | Relatório de testes |
+| [`docs/STATUS.md`](docs/STATUS.md) | Situação de cada critério de conclusão |
+
 ## Banco de dados
 
-As migrações ficam em `supabase/migrations/` e devem ser aplicadas **em ordem**.
-Passo a passo completo (incluindo o primeiro administrador): [`docs/IMPLANTACAO.md`](docs/IMPLANTACAO.md).
+8 migrações em `supabase/migrations/`, aplicadas **em ordem** (`npx supabase db push`).
 
 ## Testes
 
 ```bash
+npm run typecheck # TypeScript estrito
 npm test          # testes de frontend (Vitest)
 npm run test:db   # aplica as migrações num banco descartável e roda os testes de segurança/fluxo/concorrência
 ```

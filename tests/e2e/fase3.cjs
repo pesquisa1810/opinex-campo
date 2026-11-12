@@ -67,6 +67,7 @@ async function login(page, u) {
   await page.setViewportSize({ width: 1366, height: 860 })
   ok('entrevistador pendente vê "em análise" e é redirecionado ao tentar /admin')
   await page.getByLabel('Sair').click()
+  await page.getByRole('button', { name: 'Entrar' }).waitFor()
 
   // Admin
   await login(page, ADMIN)
@@ -222,9 +223,10 @@ async function login(page, u) {
   await page.setViewportSize({ width: 1366, height: 860 })
   await page.getByLabel('Menu do usuário').click()
   await page.getByRole('button', { name: 'Sair' }).click()
+  await page.getByRole('button', { name: 'Entrar' }).waitFor()
   await login(page, INT)
-  await page.getByText('Cadastro aprovado').waitFor()
-  ok('entrevistador aprovado vê o novo status')
+  await page.getByText('Autorize este celular para coletar').waitFor()
+  ok('entrevistador aprovado vê suas pesquisas e o pedido de autorização do celular')
 
   await browser.close()
   console.log(`\nFASE 3: ${step} verificações de ponta a ponta passaram`)

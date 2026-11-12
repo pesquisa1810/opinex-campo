@@ -52,7 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: roles.includes('admin') && profile?.status === 'approved',
     isInterviewer: roles.includes('interviewer'),
     refresh: async () => { const { data } = await supabase.auth.getSession(); await load(data.session) },
-    signOut: async () => { await supabase.auth.signOut(); await load(null) },
+    signOut: async () => {
+      // Encerra no servidor (revoga o refresh token) e garante a limpeza local mesmo se a rede falhar
+      const { error } = await supabase.auth.signOut()
+      if (error) await supabase.auth.signOut({ scope: 'local' })
+      await load(null)
+    },
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

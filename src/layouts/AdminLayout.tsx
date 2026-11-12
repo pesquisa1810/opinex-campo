@@ -55,7 +55,8 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-dvh">
-      <aside className="sticky top-0 h-dvh w-[62px] shrink-0 overflow-y-auto bg-navy px-1.5 py-3 text-white md:w-[235px] md:px-3.5 md:py-[22px]">
+      <div className="w-[62px] shrink-0 bg-navy md:w-[235px]">
+      <aside className="sticky top-0 h-dvh overflow-y-auto px-1.5 py-3 text-white md:px-3.5 md:py-[22px]">
         <div className="flex items-center gap-2.5 border-b border-[#40506a] px-1 pb-[22px] pt-2 md:px-2.5">
           <LogoMark className="h-9 w-9 md:hidden" />
           <Wordmark className="hidden md:block" />
@@ -78,6 +79,7 @@ export default function AdminLayout() {
           OPINEX CAMPO<br />Inteligência na coleta.<br />Precisão na informação.
         </div>
       </aside>
+      </div>
 
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-30 flex h-[66px] items-center justify-between border-b border-line bg-white px-3 sm:px-[26px]">

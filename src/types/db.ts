@@ -173,3 +173,27 @@ export interface ActivityItem {
   actor_name: string | null
   summary: string | null
 }
+
+export interface ResultOption { label: string; code: number; count: number; pct_valid: number | null; pct_base: number | null }
+export interface ResultQuestion {
+  position: number; text: string; type: QuestionType; base_interviews: number; valid_responses: number; non_responses: number
+  options: ResultOption[] | null; others: string[] | null
+  numeric: { n: number; min: number | null; max: number | null; mean: number | null; median: number | null } | null
+  texts: string[] | null
+}
+export interface SurveyResults {
+  survey: { id: string; code: string; name: string; sampling_type: SamplingType; sampling_method: string | null; target_total: number
+    municipality: string | null; state: string | null; start_date: string | null; end_date: string | null; responsible: string | null; objective: string | null }
+  interviews_included: number
+  filters: { statuses: InterviewStatus[]; municipality: string | null; neighborhood: string | null; from: string | null; to: string | null }
+  questions: ResultQuestion[]
+  by_municipality: { label: string; total: number }[]
+  by_neighborhood: { label: string; total: number }[]
+  by_day: { day: string; total: number }[]
+  by_interviewer: { label: string; total: number }[]
+  methodology_note: string
+}
+export interface MicroRow {
+  protocolo: string; versao: number; status: InterviewStatus; enviada_em: string; duracao_seg: number; entrevistador: string
+  municipio: string; bairro: string; setor: string | null; gps: string | null; qualidade: number; respostas: Record<string, string | number | null>
+}

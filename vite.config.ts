@@ -30,6 +30,10 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
+        // Nova versão assume imediatamente e caches de versões antigas são apagados
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         // Pré-cache leve (casca do app). Módulos pesados do admin (PDF, gráficos, mapa) são
         // baixados sob demanda e guardados depois. Dados do Supabase NUNCA são cacheados.
         globPatterns: ['**/*.{html,css,svg,png,ico,webmanifest}', 'assets/index-*.js'],

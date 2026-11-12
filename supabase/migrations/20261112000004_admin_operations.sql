@@ -92,7 +92,7 @@ returns void language plpgsql security definer set search_path = '' as $$
 begin
   create temporary table if not exists _qmap(old_id uuid, new_id uuid) on commit drop;
   create temporary table if not exists _omap(old_id uuid, new_id uuid) on commit drop;
-  delete from _qmap; delete from _omap;
+  delete from _qmap where true; delete from _omap where true;  -- pg_safeupdate exige WHERE
 
   insert into _qmap select id, gen_random_uuid() from public.questions where version_id = _from;
   insert into public.questions(id, version_id, position, type, text, help_text, required, min_value, max_value, max_choices)

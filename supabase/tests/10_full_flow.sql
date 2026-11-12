@@ -477,3 +477,42 @@ do $$ begin
   assert (select count(*) from public.audit_logs) > 20;
   perform t.pass('operações administrativas registradas em audit_logs');
 end $$;
+
+-- ------------------------------------------------ Construtor (RPCs 0007) ---
+select t.as_user('admin@t.com');
+do $$ declare s uuid; v uuid; q1 uuid; q2 uuid; q3 uuid; o jsonb; r jsonb; begin
+  insert into public.surveys(code, name) values ('BUILDER', 'Teste do construtor') returning id into s;
+  v := public.admin_open_draft_version(s);
+  q1 := public.admin_save_question(jsonb_build_object('version_id', v, 'type', 'single_choice', 'text', 'Sexo',
+          'options', jsonb_build_array(jsonb_build_object('label', 'Feminino'), jsonb_build_object('label', 'Masculino'),
+                                       jsonb_build_object('label', 'Outro', 'is_other', true))));
+  q2 := public.admin_save_question(jsonb_build_object('version_id', v, 'type', 'numeric', 'text', 'Idade', 'min_value', 16, 'max_value', 120));
+  q3 := public.admin_save_question(jsonb_build_object('version_id', v, 'type', 'open_text', 'text', 'Comentário',
+          'conditions', jsonb_build_array(jsonb_build_object('depends_on_question_id', q2, 'operator', 'greater_than', 'numeric_value', 60))));
+  assert (select array_agg(position order by position) from public.questions where version_id = v) = array[1,2,3];
+  assert (select code from public.question_options where question_id = q1 and is_other) = 99;
+  -- Edita alternativas: remove "Masculino", reordena e adiciona nova
+  select jsonb_agg(x) into o from (
+    select jsonb_build_object('id', id, 'label', label, 'is_other', is_other) x from public.question_options
+     where question_id = q1 and label <> 'Masculino' order by position desc) s;
+  o := o || jsonb_build_array(jsonb_build_object('label', 'Prefiro não informar'));
+  perform public.admin_save_question(jsonb_build_object('id', q1, 'version_id', v, 'type', 'single_choice', 'text', 'Sexo', 'options', o));
+  assert (select string_agg(label, ',' order by position) from public.question_options where question_id = q1) = 'Outro,Feminino,Prefiro não informar';
+  perform public.admin_duplicate_question(q1);
+  assert (select count(*) from public.questions where version_id = v) = 4;
+  assert (select text from public.questions where version_id = v and position = 2) = 'Sexo (cópia)';
+  perform public.admin_reorder_questions(v, array(select id from public.questions where version_id = v order by position desc));
+  assert (select text from public.questions where version_id = v and position = 1) = 'Comentário';
+  r := public.admin_publish_version(v);
+  assert not (r ->> 'ok')::boolean and r::text like '%pergunta anterior%', 'condição apontando para pergunta posterior é recusada';
+  perform public.admin_reorder_questions(v, array(select id from public.questions where version_id = v order by position desc));
+  perform public.admin_delete_question((select id from public.questions where version_id = v and position = 2));
+  assert (select array_agg(position order by position) from public.questions where version_id = v) = array[1,2,3];
+  r := public.admin_publish_version(v);
+  assert (r ->> 'ok')::boolean, r::text;
+  assert (select count(*) from public.admin_survey_overview() where code = 'BUILDER' and published_questions = 3) = 1;
+  assert (select count(*) from public.admin_interviewer_overview()) >= 7;
+  assert (select count(*) from public.admin_recent_activity(5)) = 5;
+  perform t.pass('construtor: salvar/editar/duplicar/reordenar/excluir perguntas e validação na publicação');
+end $$;
+select t.as_postgres();

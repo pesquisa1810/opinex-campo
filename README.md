@@ -45,6 +45,14 @@ npm run test:db   # aplica as migrações num banco descartável e roda os teste
 
 `test:db` usa `PGHOST`, `PGPORT`, `PGUSER` (padrão `localhost:54322`, `postgres`).
 
+Teste de ponta a ponta (navegador real + Supabase local via Docker):
+
+```bash
+npx supabase start          # sobe Auth, PostgreSQL, Realtime e aplica as migrações
+npm run dev
+node tests/e2e/fase3.cjs    # requer Playwright/Chromium instalados
+```
+
 ## Estrutura
 
 ```

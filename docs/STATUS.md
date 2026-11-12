@@ -16,12 +16,19 @@ Legenda: **Implementado** (código pronto) · **Testado** (teste automatizado pa
 | 2 | Versionamento de questionário (imutável após publicação) | Implementado · Testado (local) |
 | 2 | Alertas de qualidade, revisão com justificativa, auditoria | Implementado · Testado (local) |
 | 2 | Painel e resultados com dados reais (RPC) | Implementado · Testado (local) |
-| 2 | Aplicação no Supabase real | **Pendente** (credenciais) |
-| 3 | Painel administrativo (telas) | Pendente |
+| 2 | Migrações aplicadas num Supabase completo (local, Docker) | Implementado · Testado |
+| 2 | Aplicação no Supabase do proprietário | **Pendente** (credenciais) |
+| 3 | Layout do painel conforme o modelo de telas (menu lateral, cards, painéis, selos, barras) | Implementado · Testado (e2e) |
+| 3 | Login, cadastro público (link WhatsApp), recuperação de senha, termos e privacidade | Implementado · Testado (e2e) |
+| 3 | Visão geral com dados reais + atualização em tempo real (Realtime) | Implementado · Testado (e2e) |
+| 3 | Pesquisas: criar, editar, duplicar, transições de status, equipe/metas, metas por área | Implementado · Testado (e2e: criar, publicar, atribuir) |
+| 3 | Construtor de questionários (6 formatos, condicionais, limites, reordenar, duplicar, pré-visualizar, publicar, versionar) | Implementado · Testado (e2e + unitários) |
+| 3 | Entrevistadores: aprovar, rejeitar, bloquear, inativar, reativar, metas, atribuições, histórico, revogar sessões | Implementado · Testado (e2e: aprovar) |
 | 4 | Telas de dispositivos/QR Code | Pendente |
 | 5 | Área e coleta do entrevistador | Pendente |
 | 6 | Monitoramento, qualidade, relatórios PDF/Excel/CSV | Pendente |
 | 7 | Testes Android/iPhone, deploy HTTPS, documentação final | Pendente |
 | — | GitHub | **Pendente** (autorização) |
 
-"Testado (local)" = suíte `npm run test:db` num PostgreSQL 16 com shim do Supabase (34 verificações + concorrência).
+"Testado (local)" = suíte `npm run test:db` num PostgreSQL 16 com shim do Supabase (35 verificações + concorrência).
+"Testado (e2e)" = `tests/e2e/fase3.cjs`: navegador real contra Supabase local completo (15 verificações).

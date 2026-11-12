@@ -5,7 +5,7 @@ import { Logo } from '@/components/brand/Logo'
 describe('Logo', () => {
   it('exibe nome e slogan', () => {
     render(<Logo slogan />)
-    expect(screen.getByText(/OPINEX/)).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'OPINEX' })).toBeInTheDocument()
     expect(screen.getByText('Inteligência na coleta. Precisão na informação.')).toBeInTheDocument()
   })
 })

@@ -4,7 +4,7 @@ Legenda: **Implementado** · **Testado** (teste automatizado passando) · **Homo
 
 | # | Critério de conclusão | Situação |
 |---|---|---|
-| 1 | Administrador acessa o painel | Implementado · Testado |
+| 1 | Administrador acessa o painel | Implementado · Testado · ✅ Validado em produção (12/11/2026) |
 | 2 | Pesquisas podem ser criadas | Implementado · Testado |
 | 3 | Questionários podem ser elaborados | Implementado · Testado |
 | 4 | Entrevistadores se cadastram pelo link | Implementado · Testado |
@@ -18,8 +18,14 @@ Legenda: **Implementado** · **Testado** (teste automatizado passando) · **Homo
 | 12 | Monitoramento da coleta | Implementado · Testado |
 | 13 | Relatórios com dados reais | Implementado · Testado (PDF, Excel, CSV, microdados) |
 | 14 | Permissões impedem acesso indevido | Implementado · Testado |
-| 15 | Versionado no GitHub | Implementado (repositório git local, 4+ commits) · **Pendente:** envio ao seu GitHub |
-| 16 | Publicado em HTTPS | Configuração pronta (Vercel/Netlify) · **Pendente:** suas contas |
+| 15 | Versionado no GitHub | ✅ Publicado em github.com/pesquisa1810/opinex-campo |
+| 16 | Publicado em HTTPS | ✅ Publicado em https://opinex-campo.vercel.app (Vercel) · banco Supabase em São Paulo |
 | 17 | Testes essenciais documentados | Implementado · `docs/TESTES.md` |
 
-**Homologado:** nenhum item ainda — depende do seu uso real com o checklist de `docs/PUBLICACAO.md`.
+## Produção
+- Site: https://opinex-campo.vercel.app (publicação automática a cada envio ao GitHub)
+- Banco: Supabase `opinex-campo` (São Paulo, sa-east-1), 8 migrações aplicadas e registradas
+- Primeiro administrador provisionado e acesso ao painel confirmado
+- Teste em produção: login, cadastro, PWA, cabeçalhos de segurança e bloqueio de acesso anônimo verificados
+
+**Homologado:** pendente do checklist com celulares reais em `docs/PUBLICACAO.md`.

@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { FileDown, FileSpreadsheet, FileText, Table2 } from 'lucide-react'
-import { BarList, Empty, Field, Notice, PageHeader, Panel, Spinner, StatCard } from '@/components/ui'
+import { BarList, Empty, Field, Modal, Notice, PageHeader, Panel, Spinner, StatCard } from '@/components/ui'
 import { useToast } from '@/components/ui/toast'
 import { supabase } from '@/lib/supabase'
 import { api } from '@/services/admin'
-import { exportCsv, exportMicroCsv, exportPdf, exportXlsx } from '@/services/exports'
+import { exportCsv, exportMicroCsv, exportXlsx } from '@/services/exports'
+import { exportPdfReport, type PdfChart, type PdfOptions } from '@/services/pdfReport'
 import { interviewStatus, questionType } from '@/lib/labels'
 import { fmtDate, fmtNum, fmtPct, pct } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -28,6 +29,11 @@ export default function Results() {
   const [to, setTo] = useState('')
   const [base, setBase] = useState<Base>('valid')
   const [busy, setBusy] = useState<string | null>(null)
+  const [charts, setCharts] = useState<Record<number, Chart>>({})
+  const [pdfOpen, setPdfOpen] = useState(false)
+  const [pdfOpts, setPdfOpts] = useState<Omit<PdfOptions, 'charts' | 'base'>>({
+    defaultChart: 'tela', includeOverview: true, includeTables: true, includeTexts: true,
+  })
   const selected = survey || surveys.data?.find((s) => s.interviews > 0)?.id || surveys.data?.[0]?.id || ''
 
   const places = useQuery({ queryKey: ['dashboard', selected], enabled: !!selected, queryFn: () => api.dashboard(selected) })
@@ -48,7 +54,7 @@ export default function Results() {
     if (!r) return
     setBusy(kind)
     try {
-      if (kind === 'pdf') exportPdf(r)
+      if (kind === 'pdf') { exportPdfReport(r, { ...pdfOpts, charts: charts as Record<number, PdfChart>, base }); setPdfOpen(false) }
       else if (kind === 'csv') exportCsv(r)
       else {
         const { data, error } = await supabase.rpc('admin_export_microdata', { _survey: selected, _statuses: statuses })
@@ -69,7 +75,7 @@ export default function Results() {
       <PageHeader eyebrow="Área restrita ao administrador" title="Apuração e relatórios"
         description="Consolidação descritiva das respostas, com denominadores explícitos."
         actions={<>
-          <button className="btn-gold" disabled={!r || !!busy} onClick={() => run('pdf')}><FileDown className="h-4 w-4" />Exportar PDF</button>
+          <button className="btn-gold" disabled={!r || !!busy} onClick={() => setPdfOpen(true)}><FileDown className="h-4 w-4" />Exportar PDF</button>
           <button className="btn-soft" disabled={!r || !!busy} onClick={() => run('xlsx')}><FileSpreadsheet className="h-4 w-4" />Excel</button>
           <button className="btn-soft" disabled={!r || !!busy} onClick={() => run('csv')}><FileText className="h-4 w-4" />CSV</button>
           <button className="btn-soft" disabled={!r || !!busy} onClick={() => run('micro')} title="Uma linha por entrevista"><Table2 className="h-4 w-4" />Microdados CSV</button>
@@ -114,7 +120,7 @@ export default function Results() {
 
           {r.interviews_included === 0 ? <Panel><Empty title="Nenhuma entrevista no filtro selecionado">Ajuste os critérios acima.</Empty></Panel> : (
             <div className="space-y-[15px]">
-              {r.questions.map((q) => <QuestionResult key={q.position} q={q} base={base} />)}
+              {r.questions.map((q) => <QuestionResult key={q.position} q={q} base={base} chart={charts[q.position] ?? 'barras'} onChart={(c) => setCharts({ ...charts, [q.position]: c })} />)}
               <div className="grid gap-[15px] lg:grid-cols-2">
                 <Panel title="Comparação entre municípios"><BarList items={r.by_municipality.map((x) => ({ label: x.label, value: x.total }))} /></Panel>
                 <Panel title="Comparação entre bairros"><BarList items={r.by_neighborhood.slice(0, 15).map((x) => ({ label: x.label, value: x.total }))} /></Panel>
@@ -131,12 +137,38 @@ export default function Results() {
           )}
         </>
       )}
+
+      <Modal open={pdfOpen} onClose={() => setPdfOpen(false)} title="Relatório em PDF com gráficos"
+        footer={<><button className="btn-soft" onClick={() => setPdfOpen(false)}>Cancelar</button>
+          <button className="btn-gold" disabled={!r || !!busy} onClick={() => run('pdf')}><FileDown className="h-4 w-4" />{busy === 'pdf' ? 'Gerando…' : 'Gerar PDF'}</button></>}>
+        <div className="space-y-4 text-sm">
+          <p className="muted text-xs">O relatório usa os filtros atuais (pesquisa, situações, local, período) e a base de cálculo selecionada:
+            <b> {base === 'valid' ? 'respostas válidas da pergunta' : 'entrevistas incluídas'}</b>.</p>
+          <Field label="Tipo de gráfico das perguntas">
+            <select className="input" value={pdfOpts.defaultChart} onChange={(e) => setPdfOpts({ ...pdfOpts, defaultChart: e.target.value as PdfOptions['defaultChart'] })}>
+              <option value="tela">Conforme escolhido em cada pergunta na tela</option>
+              <option value="barras">Barras horizontais em todas</option>
+              <option value="colunas">Colunas em todas</option>
+              <option value="setores">Setores (pizza) nas de escolha única</option>
+            </select>
+          </Field>
+          {([['includeOverview', 'Visão geral da coleta (evolução diária, municípios, bairros e produtividade)'],
+            ['includeTables', 'Tabelas de frequência absoluta e relativa'],
+            ['includeTexts', 'Respostas espontâneas e especificações de "Outro"']] as [keyof typeof pdfOpts, string][]).map(([k, label]) => (
+            <label key={k} className="flex items-start gap-2">
+              <input type="checkbox" className="mt-0.5 h-4 w-4 accent-navy" checked={pdfOpts[k] as boolean}
+                onChange={(e) => setPdfOpts({ ...pdfOpts, [k]: e.target.checked })} />{label}
+            </label>
+          ))}
+          <p className="k">Respostas individuais e localização GPS não entram no PDF. Documento restrito ao administrador.</p>
+        </div>
+      </Modal>
     </>
   )
 }
 
-function QuestionResult({ q, base }: { q: ResultQuestion; base: Base }) {
-  const [chart, setChart] = useState<Chart>('barras')
+function QuestionResult({ q, base, chart, onChart }: { q: ResultQuestion; base: Base; chart: Chart; onChart: (c: Chart) => void }) {
+  const setChart = onChart
   const [showAll, setShowAll] = useState(false)
   const denom = base === 'valid' ? q.valid_responses : q.base_interviews
   const data = (q.options ?? []).map((o) => ({ name: o.label, value: o.count, pct: base === 'valid' ? o.pct_valid : o.pct_base }))

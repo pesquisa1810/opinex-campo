@@ -1,6 +1,4 @@
 // Exportações de relatórios (somente administradores). Dados vêm das funções do banco.
-import { jsPDF } from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import writeXlsxFile from 'write-excel-file/browser'
 import type { MicroRow, SurveyResults } from '@/types/db'
 import { interviewStatus, questionType } from '@/lib/labels'
@@ -84,62 +82,4 @@ export async function exportXlsx(r: SurveyResults, micro: MicroRow[]) {
     { data: bold(microRows(micro, r)), sheet: 'Microdados' },
   ]).toBlob()
   download(blob, `opinex-${slug(r.survey.code)}-relatorio-${stamp()}.xlsx`)
-}
-
-export function exportPdf(r: SurveyResults) {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
-  const W = doc.internal.pageSize.getWidth()
-  const navy: [number, number, number] = [16, 29, 53], gold: [number, number, number] = [198, 166, 107]
-
-  doc.setFillColor(...navy); doc.rect(0, 0, W, 34, 'F')
-  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(18)
-  doc.text('OPIN', 14, 15); doc.setTextColor(...gold); doc.text('EX', 14 + doc.getTextWidth('OPIN'), 15)
-  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
-  doc.text('CAMPO • Inteligência na coleta. Precisão na informação.', 14, 21)
-  doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.text('Relatório de apuração', 14, 29)
-
-  doc.setTextColor(24, 38, 61); doc.setFontSize(14)
-  const title = doc.splitTextToSize(`${r.survey.code} — ${r.survey.name}`, W - 28)
-  doc.text(title, 14, 44)
-  let y = 44 + title.length * 6
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(104, 115, 134)
-  const meta = [
-    `Local: ${[r.survey.municipality, r.survey.state].filter(Boolean).join('/') || '—'}   ·   Período da pesquisa: ${fmtDate(r.survey.start_date)} a ${fmtDate(r.survey.end_date)}`,
-    `Entrevistas incluídas: ${r.interviews_included}   ·   Meta: ${r.survey.target_total}   ·   Amostra: ${r.survey.sampling_type === 'probabilistic' ? 'probabilística' : 'não probabilística'}${r.survey.sampling_method ? ` (${r.survey.sampling_method})` : ''}`,
-    filtersText(r), `Gerado em ${fmtDateTime(new Date().toISOString())}`,
-  ]
-  for (const m of meta) { const l = doc.splitTextToSize(m, W - 28); doc.text(l, 14, y); y += l.length * 4.5 }
-  doc.setFillColor(255, 248, 232); doc.setDrawColor(238, 223, 185)
-  const note = doc.splitTextToSize(`Nota metodológica: ${r.methodology_note}`, W - 34)
-  doc.roundedRect(14, y + 1, W - 28, note.length * 4.3 + 5, 2, 2, 'FD')
-  doc.setTextColor(116, 91, 40); doc.text(note, 17, y + 6); y += note.length * 4.3 + 11
-
-  for (const q of r.questions) {
-    if (y > 250) { doc.addPage(); y = 18 }
-    doc.setTextColor(24, 38, 61); doc.setFont('helvetica', 'bold'); doc.setFontSize(10)
-    const qt = doc.splitTextToSize(`P${q.position}. ${q.text}`, W - 28); doc.text(qt, 14, y); y += qt.length * 4.6
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(104, 115, 134)
-    doc.text(`${questionType[q.type].label} · Respostas válidas: ${q.valid_responses} · Não resposta/não se aplica: ${q.non_responses} · Entrevistas incluídas: ${q.base_interviews}`, 14, y); y += 2
-    let body: Cell[][] = []
-    let head: string[] = []
-    if (q.options) { head = ['Alternativa', 'Freq.', '% válidas', '% incluídas']; body = q.options.map((o) => [o.label, o.count, pctBR(o.pct_valid), pctBR(o.pct_base)]) }
-    else if (q.numeric) { head = ['N', 'Mínimo', 'Máximo', 'Média', 'Mediana']; const br = (v: number | null) => (v == null ? null : Number(v).toLocaleString('pt-BR'))
-      body = [[q.numeric.n, br(q.numeric.min), br(q.numeric.max), br(q.numeric.mean), br(q.numeric.median)]] }
-    else { head = [`Respostas em texto (${q.texts?.length ?? 0}${(q.texts?.length ?? 0) >= 300 ? '+' : ''}) — primeiras 15`]; body = (q.texts ?? []).slice(0, 15).map((t) => [t]) }
-    if (!body.length) body = [['Sem respostas no filtro selecionado']]
-    autoTable(doc, {
-      startY: y + 1, head: [head], body: body.map((r) => r.map((v) => (v == null ? '—' : String(v)))), theme: 'grid', margin: { left: 14, right: 14 },
-      styles: { fontSize: 8, cellPadding: 1.6, textColor: [24, 38, 61], lineColor: [228, 232, 239] },
-      headStyles: { fillColor: navy, textColor: 255, fontStyle: 'bold' },
-      columnStyles: q.options ? { 1: { halign: 'right', cellWidth: 18 }, 2: { halign: 'right', cellWidth: 22 }, 3: { halign: 'right', cellWidth: 24 } } : {},
-    })
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8
-  }
-  const pages = doc.getNumberOfPages()
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i); doc.setFontSize(7); doc.setTextColor(150, 150, 150)
-    doc.text(`OPINEX CAMPO · ${r.survey.code} · Documento restrito ao administrador`, 14, 290)
-    doc.text(`Página ${i} de ${pages}`, W - 14, 290, { align: 'right' })
-  }
-  doc.save(`opinex-${slug(r.survey.code)}-relatorio-${stamp()}.pdf`)
 }

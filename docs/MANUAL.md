@@ -12,6 +12,18 @@
 | **Monitoramento** | Lista e mapa das entrevistas, filtros, alertas de qualidade. Clique numa entrevista para analisar e aprovar / rejeitar / pedir revisão (justificativa obrigatória para rejeitar). |
 | **Apuração e relatórios** | Frequências absolutas e relativas com denominadores, gráficos (barras, colunas, setores), filtros por situação/local/período e exportação PDF, Excel, CSV e microdados. |
 
+### Relatório em PDF com gráficos
+1. Em **Apuração e relatórios**, escolha a pesquisa, os filtros (situações, município, bairro, período) e a **base de cálculo**.
+2. Em cada pergunta, escolha o gráfico (**barras**, **colunas** ou **setores**): o PDF usa a mesma escolha.
+3. Clique em **Exportar PDF** e marque o que deve entrar:
+   - tipo de gráfico (conforme a tela ou o mesmo para todas);
+   - visão geral da coleta (evolução diária, municípios, bairros, produtividade);
+   - tabelas de frequência;
+   - respostas espontâneas e especificações de "Outro".
+4. Clique em **Gerar PDF**.
+
+O relatório traz capa com ficha técnica e nota metodológica, gráficos vetoriais (nítidos na impressão), denominadores de cada pergunta e numeração de páginas. Não inclui respostas individuais nem localização GPS. Exemplo: `docs/telas/24-relatorio-pdf.png`.
+
 **Fluxo típico:** criar pesquisa → montar e publicar questionário → enviar link de cadastro → aprovar entrevistadores → atribuir pesquisa → publicar/iniciar coleta → autorizar celulares por QR → acompanhar no Monitoramento → analisar → apurar e exportar.
 
 ## Entrevistador (pelo celular)

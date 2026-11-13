@@ -108,18 +108,34 @@ const ok = (m) => console.log(`PASS ${++step}: ${m}`)
   ok('apuração: denominadores corretos (rejeitada excluída), frequência absoluta/relativa, gráficos e filtro por situação')
 
   const files = {}
-  for (const [btn, key] of [['Exportar PDF', 'pdf'], ['Excel', 'xlsx'], ['CSV', 'csv'], ['Microdados CSV', 'micro']]) {
+  // PDF: abre a janela de opções e gera com gráficos (P1 em setores, escolhido na tela)
+  await a.getByRole('button', { name: 'Exportar PDF', exact: true }).click()
+  const pdfDlg = a.getByRole('dialog', { name: 'Relatório em PDF com gráficos' })
+  await pdfDlg.getByText('Tipo de gráfico das perguntas').waitFor()
+  await a.screenshot({ path: `${SHOTS}/23-opcoes-pdf.png` })
+  {
+    const [dl] = await Promise.all([a.waitForEvent('download'), pdfDlg.getByRole('button', { name: 'Gerar PDF' }).click()])
+    const path = `${SHOTS}/${dl.suggestedFilename()}`; await dl.saveAs(path); files.pdf = path
+  }
+  for (const [btn, key] of [['Excel', 'xlsx'], ['CSV', 'csv'], ['Microdados CSV', 'micro']]) {
     const [dl] = await Promise.all([a.waitForEvent('download'), a.getByRole('button', { name: btn, exact: true }).click()])
     const path = `${SHOTS}/${dl.suggestedFilename()}`; await dl.saveAs(path); files[key] = path
   }
   const head = (p, n) => fs.readFileSync(p).subarray(0, n).toString('latin1')
   if (!head(files.pdf, 5).startsWith('%PDF')) throw new Error('PDF inválido')
+  const pdfText = require('child_process').execSync(`pdftotext -layout "${files.pdf}" -`).toString()
+  for (const must of ['RELATÓRIO DE APURAÇÃO', 'Visão geral da coleta', 'Evolução diária', 'Resultados por pergunta', 'P1. Como avalia a coleta de lixo?', 'marcações', 'Nota metodológica'])
+    if (!pdfText.includes(must)) throw new Error('PDF sem o trecho: ' + must)
+  const pages = Number(require('child_process').execSync(`pdfinfo "${files.pdf}" | awk '/^Pages/{print $2}'`).toString().trim())
+  if (pages < 3) throw new Error('PDF com poucas páginas: ' + pages)
+  const drawOps = Number(require('child_process').execSync(`python3 -I ${require('path').join(__dirname, 'pdfdraw.py')} "${files.pdf}"`).toString().trim())
+  if (drawOps < 100) throw new Error('PDF sem gráficos (poucas operações de desenho): ' + drawOps)
   if (!head(files.xlsx, 2).startsWith('PK')) throw new Error('XLSX inválido')
   const csv = fs.readFileSync(files.csv, 'utf8'); const micro = fs.readFileSync(files.micro, 'utf8')
   if (!csv.includes('Boa;1;2;66,7;66,7')) throw new Error('CSV frequências inesperado:\n' + csv.slice(0, 800))
   if (micro.trim().split('\r\n').length !== 4) throw new Error('microdados deveriam ter 3 linhas + cabeçalho')
   if (sql(`select count(*) from public.audit_logs where action='export_microdata' and created_at > now() - interval '5 minutes'`) === '0') throw new Error('exportação não auditada')
-  ok(`exportações geradas e conferidas: PDF (${fs.statSync(files.pdf).size} B), Excel (${fs.statSync(files.xlsx).size} B), CSV e microdados; exportação auditada`)
+  ok(`exportações geradas e conferidas: PDF com gráficos (${pages} páginas, ${drawOps} operações de desenho, ${fs.statSync(files.pdf).size} B), Excel (${fs.statSync(files.xlsx).size} B), CSV e microdados; exportação auditada`)
 
   // Entrevistador não acessa resultados
   const r = await ent.rpc('admin_survey_results', { _survey: sv.id })
